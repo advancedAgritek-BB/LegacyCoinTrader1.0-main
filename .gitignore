@@ -21,7 +21,7 @@ wheels/
 MANIFEST
 
 # Environment variables
-.env
+# .env  # Commented out to allow .env file with placeholder values
 .venv
 env/
 venv/

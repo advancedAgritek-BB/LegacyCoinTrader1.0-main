@@ -48,12 +48,9 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 ## ⚙️ Configuration
 
 ### 1. Environment Variables
-Copy the template and fill in your API keys:
+The `.env` file is already included in the package with placeholder values. Simply edit it with your actual API keys:
 ```bash
-# Copy the template content from ENV_TEMPLATE.md
-cp ENV_TEMPLATE.md crypto_bot/.env
-
-# Edit the .env file with your actual API keys
+# Edit the existing .env file with your actual API keys
 nano crypto_bot/.env  # or use your preferred editor
 ```
 
