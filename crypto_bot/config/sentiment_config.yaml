@@ -1,0 +1,73 @@
+# Sentiment Analysis Configuration
+# This file controls how sentiment affects trading decisions
+# Sentiment is designed to be a small boost, not a deciding factor
+
+sentiment:
+  # Global sentiment settings
+  enabled: true
+  max_boost_factor: 0.25          # Maximum 25% boost from sentiment
+  min_galaxy_score: 70.0          # Minimum Galaxy Score required for any boost
+  min_sentiment_score: 0.7        # Minimum sentiment score required for any boost
+  
+  # Weighting in different systems
+  weights:
+    pump_sniper: 0.08             # Weight in pump sniper decision making
+    enhanced_scanner: 0.05        # Weight in enhanced scanner scoring
+    pool_scoring: 0.15            # Weight in pool quality scoring
+    signal_fusion: 0.10           # Weight in signal fusion
+    composite_score: 0.15         # Weight in composite sentiment scores
+    
+  # Boost calculation
+  boost_calculation:
+    galaxy_range: 30.0            # Range for galaxy score normalization
+    sentiment_range: 0.3          # Range for sentiment score normalization
+    divisor: 6                     # Divisor for combining boosts (higher = smaller boost)
+    
+  # Failsafe settings
+  failsafe:
+    never_hinder_trades: true     # Never return < 1.0 boost factors
+    fallback_to_neutral: true     # Use neutral sentiment if API fails
+    max_retries: 2                # Maximum API retry attempts
+    timeout_seconds: 10           # API request timeout
+    
+  # Integration settings
+  integration:
+    lunarcrush_enabled: true      # Enable LunarCrush sentiment
+    combine_with_fng: true        # Combine with Fear & Greed Index
+    combine_with_twitter: false   # Combine with Twitter sentiment (disabled by default)
+    
+  # Strategy-specific overrides
+  strategy_overrides:
+    meme_wave_bot:
+      max_boost_factor: 0.20      # Even more conservative for meme tokens
+      min_galaxy_score: 75.0
+      
+    sniper_bot:
+      max_boost_factor: 0.15      # Very conservative for sniper bot
+      min_galaxy_score: 80.0
+      
+    grid_bot:
+      enabled: false              # Grid bot doesn't use sentiment
+      
+    conservative_mode:
+      max_boost_factor: 0.15      # Conservative mode with minimal sentiment impact
+      weights_multiplier: 0.5     # Reduce all sentiment weights by 50%
+      
+    aggressive_mode:
+      max_boost_factor: 0.30      # Slightly more aggressive sentiment usage
+      weights_multiplier: 1.2     # Increase all sentiment weights by 20%
+
+# Documentation
+# 
+# This configuration ensures that sentiment analysis:
+# 1. Never blocks trades - only provides small enhancements
+# 2. Has minimal impact on scoring (5-15% weight in most systems)
+# 3. Requires high-quality sentiment data (Galaxy Score >= 70, Sentiment >= 0.7)
+# 4. Provides conservative boosts (max 25% increase)
+# 5. Can be easily adjusted or disabled per strategy
+#
+# To make sentiment even less impactful:
+# - Reduce max_boost_factor to 0.15 or 0.10
+# - Reduce weights by 50% using weights_multiplier: 0.5
+# - Increase min_galaxy_score and min_sentiment_score
+# - Increase boost_calculation.divisor

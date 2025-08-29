@@ -1,0 +1,85 @@
+# Symbol Validation Configuration
+# This file controls how symbols are validated and routed to different data sources
+
+# Exchange-specific symbol patterns
+exchanges:
+  kraken:
+    supported_quotes: ["USD", "USDT", "EUR", "BTC", "ETH"]
+    supported_bases: [
+      "BTC", "ETH", "SOL", "ADA", "DOT", "LINK", "MATIC", "AVAX", "UNI", "AAVE",
+      "XRP", "LTC", "BCH", "EOS", "TRX", "XLM", "NEO", "VET", "ICX", "ONT", 
+      "QTUM", "ZIL", "BAT", "ZRX", "OMG", "KNC", "REP", "ZEC", "DASH", "XMR", 
+      "ETC", "WAVES", "STRAT", "LSK", "ARK", "STEEM", "GNT", "FUN", "SNT", 
+      "POWR", "BNT", "MANA", "SALT", "STORJ", "DNT", "LOOM", "REQ", "CVC", 
+      "RLC", "MKR", "ENJ", "REN", "BNB", "COMP", "YFI", "CRV", "BAL", "SUSHI", 
+      "1INCH", "ALPHA", "PERP", "RUNE", "FTM", "NEAR", "ALGO", "ATOM", "COSMOS", 
+      "OSMO", "JUNO", "SCRT", "KAVA", "ROSE", "FLOW", "ICP", "FIL", "AR", "HNT", 
+      "IOTA", "NANO"
+    ]
+    
+  coinbase:
+    supported_quotes: ["USD", "USDC", "USDT", "BTC", "ETH"]
+    supported_bases: [
+      "BTC", "ETH", "SOL", "ADA", "DOT", "LINK", "MATIC", "AVAX", "UNI", "AAVE",
+      "COMP", "YFI", "CRV", "BAL", "SUSHI", "1INCH", "ALPHA", "PERP", "RUNE", 
+      "FTM", "NEAR", "ALGO", "ATOM", "COSMOS", "OSMO", "JUNO", "SCRT", "KAVA", 
+      "ROSE", "FLOW", "ICP", "FIL", "AR", "HNT", "IOTA", "NANO", "VET", "ICX", 
+      "ONT", "QTUM", "ZIL", "BAT", "ZRX", "OMG", "KNC", "REP", "ZEC", "DASH", 
+      "XMR", "ETC", "WAVES", "STRAT", "LSK", "ARK", "STEEM", "GNT", "FUN", "SNT", 
+      "POWR", "BNT", "MANA", "SALT", "STORJ", "DNT", "LOOM", "REQ", "CVC", "RLC", 
+      "MKR", "ENJ", "REN", "BNB"
+    ]
+    
+  binance:
+    supported_quotes: ["USDT", "BUSD", "BTC", "ETH", "BNB"]
+    supported_bases: [
+      "BTC", "ETH", "SOL", "ADA", "DOT", "LINK", "MATIC", "AVAX", "UNI", "AAVE",
+      "COMP", "YFI", "CRV", "BAL", "SUSHI", "1INCH", "ALPHA", "PERP", "RUNE", 
+      "FTM", "NEAR", "ALGO", "ATOM", "COSMOS", "OSMO", "JUNO", "SCRT", "KAVA", 
+      "ROSE", "FLOW", "ICP", "FIL", "AR", "HNT", "IOTA", "NANO", "VET", "ICX", 
+      "ONT", "QTUM", "ZIL", "BAT", "ZRX", "OMG", "KNC", "REP", "ZEC", "DASH", 
+      "XMR", "ETC", "WAVES", "STRAT", "LSK", "ARK", "STEEM", "GNT", "FUN", "SNT", 
+      "POWR", "BNT", "MANA", "SALT", "STORJ", "DNT", "LOOM", "REQ", "CVC", "RLC", 
+      "MKR", "ENJ", "REN", "BNB"
+    ]
+
+# Solana-specific data sources
+solana_data_sources:
+  geckoterminal: "https://api.geckoterminal.com/api/v2/networks/solana"
+  jupiter: "https://price.jup.ag/v4"
+  birdeye: "https://public-api.birdeye.so"
+  dexscreener: "https://api.dexscreener.com/latest/dex/tokens"
+
+# Major coins that exist on both CEX and DEX
+major_coins: [
+  "BTC", "ETH", "SOL", "ADA", "DOT", "LINK", "MATIC", "AVAX", "UNI", "AAVE"
+]
+
+# Validation settings
+validation:
+  # Whether to enable strict symbol validation
+  strict_mode: true
+  
+  # Whether to log validation decisions
+  log_validation: true
+  
+  # Whether to cache validation results
+  enable_caching: true
+  
+  # Cache TTL in seconds
+  cache_ttl: 3600
+  
+  # Default behavior for unknown symbols
+  # Options: "cex", "solana", "reject"
+  unknown_symbol_behavior: "reject"
+
+# Logging settings
+logging:
+  # Log level for validation decisions
+  level: "INFO"
+  
+  # Whether to log skipped symbols
+  log_skipped: true
+  
+  # Whether to log routing decisions
+  log_routing: true

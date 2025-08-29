@@ -1,0 +1,288 @@
+# Pump.fun Liquidity Pool Launch Monitoring Service Configuration
+
+# Main service configuration
+pump_fun_orchestrator:
+  # Service enablement
+  enable_main_monitor: true
+  enable_websocket_monitor: true
+  enable_analyzer: true
+  enable_execution: true
+  
+  # Monitoring intervals (seconds)
+  monitor_interval: 30.0
+  analysis_interval: 60.0
+  execution_interval: 15.0
+  
+  # Execution thresholds
+  min_score_for_execution: 0.8
+  max_risk_for_execution: 0.3
+  min_liquidity_for_execution: 10000.0  # USD
+  
+  # Notifications
+  enable_telegram_notifications: true
+  enable_discord_notifications: false
+  enable_email_notifications: false
+  
+  # Performance tracking
+  track_performance: true
+  performance_update_interval: 300.0
+
+# Main monitor configuration
+pump_fun_monitor:
+  # API configuration
+  api_key: "${PUMPFUN_API_KEY}"  # Your pump.fun API key (from environment)
+  rpc_url: "https://api.pump.fun/v1"
+  websocket_url: "wss://api.pump.fun/v1/ws"
+  
+  # Wallet configuration
+  wallet_address: "${PUMPFUN_WALLET}"  # Your pump.fun wallet address (from environment)
+  private_key: "${PUMPFUN_PRIVATE_KEY}"  # Your pump.fun private key (from environment)
+  
+  # Monitoring settings
+  monitor_interval_seconds: 30
+  max_tokens_per_scan: 100
+  min_score_threshold: 0.3
+  
+  # Launch filtering
+  launch_filter:
+    min_initial_liquidity: 1000.0  # USD
+    max_initial_liquidity: 1000000.0  # USD
+    min_initial_price: 0.000001  # USD
+    max_initial_price: 1.0  # USD
+    require_verified_creator: false
+    min_creator_balance: 100.0  # SOL
+    allowed_fee_tiers: ["0.3%", "1%", "0.05%"]
+    allowed_pool_types: ["standard"]
+    min_pump_probability: 0.6
+    max_risk_score: 0.4
+    min_composite_score: 0.7
+
+# WebSocket monitor configuration
+pump_fun_websocket:
+  # Connection settings
+  websocket_url: "wss://api.pump.fun/v1/ws"
+  api_key: "${PUMPFUN_API_KEY}"  # Your pump.fun API key (from environment)
+  
+  # Reconnection settings
+  reconnect_interval: 5
+  max_reconnect_attempts: 10
+  heartbeat_interval: 30
+  
+  # Message processing
+  enable_message_logging: true
+  message_buffer_size: 1000
+
+# Launch analyzer configuration
+pump_fun_analyzer:
+  # Feature weights for scoring
+  feature_weights:
+    technical: 0.25
+    social: 0.20
+    microstructure: 0.25
+    risk: 0.30
+  
+  # Analysis thresholds
+  min_confidence: 0.7
+  min_data_quality: 0.6
+  high_probability_threshold: 0.8
+  high_risk_threshold: 0.7
+  
+  # Analysis intervals
+  analysis_interval: 60.0  # seconds
+  update_interval: 300.0   # seconds
+  
+  # Machine learning settings
+  enable_ml_predictions: true
+  model_update_frequency: 100  # updates per model retrain
+  prediction_confidence_threshold: 0.75
+  
+  # Model storage
+  model_path: "models/pump_fun_predictor.joblib"
+  scaler_path: "models/pump_fun_scaler.joblib"
+
+# Social sentiment analysis
+social_sentiment_analyzer:
+  # Data sources
+  enable_twitter: true
+  enable_telegram: true
+  enable_discord: true
+  enable_reddit: true
+  
+  # API keys (add your keys here)
+  twitter_bearer_token: ""
+  telegram_bot_token: ""
+  discord_webhook_url: ""
+  reddit_client_id: ""
+  reddit_client_secret: ""
+  
+  # Analysis settings
+  sentiment_update_interval: 300  # seconds
+  max_mentions_per_token: 1000
+  min_sentiment_confidence: 0.6
+  
+  # Scoring weights
+  buzz_score_weight: 0.3
+  sentiment_score_weight: 0.3
+  influencer_weight: 0.2
+  growth_weight: 0.2
+
+# Momentum detection
+momentum_detector:
+  # Technical indicators
+  enable_rsi: true
+  enable_bollinger_bands: true
+  enable_macd: true
+  enable_volume_profile: true
+  
+  # Timeframes
+  short_timeframe: 5    # minutes
+  medium_timeframe: 15  # minutes
+  long_timeframe: 60    # minutes
+  
+  # Thresholds
+  rsi_oversold: 30
+  rsi_overbought: 70
+  volume_spike_threshold: 2.0
+  momentum_threshold: 0.6
+
+# Pool analysis
+pool_analyzer:
+  # Analysis depth
+  order_book_depth: 100
+  transaction_history_limit: 1000
+  
+  # Risk assessment
+  whale_threshold: 10000  # USD
+  suspicious_pattern_threshold: 0.7
+  
+  # Performance metrics
+  update_interval: 30  # seconds
+  cache_ttl: 300       # seconds
+
+# Risk management
+risk_manager:
+  # Position sizing
+  max_position_size: 0.1  # 10% of portfolio
+  max_risk_per_trade: 0.02  # 2% of portfolio
+  
+  # Stop loss settings
+  enable_stop_loss: true
+  default_stop_loss: 0.15  # 15%
+  trailing_stop: true
+  trailing_stop_distance: 0.05  # 5%
+  
+  # Take profit settings
+  enable_take_profit: true
+  default_take_profit: 0.5  # 50%
+  partial_profit_levels: [0.25, 0.5, 1.0]  # 25%, 50%, 100%
+  
+  # Risk filters
+  max_rug_pull_risk: 0.4
+  min_liquidity_ratio: 0.1
+  max_price_volatility: 0.5
+
+# Execution settings
+execution:
+  # Order types
+  default_order_type: "market"
+  enable_limit_orders: true
+  enable_stop_orders: true
+  
+  # Slippage tolerance
+  max_slippage: 0.05  # 5%
+  
+  # Gas optimization
+  enable_gas_optimization: true
+  max_gas_price: 100  # Gwei
+  gas_priority: "medium"
+  
+  # Retry settings
+  max_retries: 3
+  retry_delay: 1  # seconds
+
+# Notifications
+notifications:
+  # Telegram
+  telegram:
+    enabled: true
+    bot_token: ""  # Your bot token
+    chat_id: ""    # Your chat ID
+    send_alerts: true
+    send_updates: true
+    send_performance: true
+  
+  # Discord
+  discord:
+    enabled: false
+    webhook_url: ""
+    send_alerts: true
+    send_updates: false
+  
+  # Email
+  email:
+    enabled: false
+    smtp_server: ""
+    smtp_port: 587
+    username: ""
+    password: ""
+    recipients: []
+
+# Logging
+logging:
+  level: "INFO"
+  enable_file_logging: true
+  log_file: "logs/pump_fun.log"
+  max_file_size: 10485760  # 10MB
+  backup_count: 5
+  
+  # Structured logging
+  enable_json_logging: false
+  include_timestamps: true
+  include_service_name: true
+
+# Performance monitoring
+performance:
+  # Metrics collection
+  enable_metrics: true
+  metrics_interval: 60  # seconds
+  
+  # Dashboard
+  enable_dashboard: true
+  dashboard_port: 8080
+  
+  # Alerts
+  enable_performance_alerts: true
+  min_success_rate: 0.6
+  max_drawdown: 0.2
+
+# Data storage
+storage:
+  # Database
+  enable_database: false
+  database_url: "sqlite:///pump_fun.db"
+  
+  # Cache
+  enable_redis: false
+  redis_url: "redis://localhost:6379"
+  
+  # File storage
+  data_directory: "data/pump_fun"
+  backup_enabled: true
+  backup_interval: 86400  # 24 hours
+
+# Development and testing
+development:
+  # Test mode
+  test_mode: false
+  
+  # Mock data
+  enable_mock_data: false
+  mock_data_file: "test_data/mock_launches.json"
+  
+  # Debug mode
+  debug_mode: false
+  verbose_logging: false
+  
+  # Performance profiling
+  enable_profiling: false
+  profile_output: "profiles/pump_fun_profile.prof"
