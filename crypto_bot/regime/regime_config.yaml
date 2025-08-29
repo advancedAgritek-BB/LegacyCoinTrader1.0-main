@@ -1,30 +1,31 @@
-adx_trending_min: 20
-adx_sideways_max: 18
-bb_width_sideways_max: 0.025
-bb_width_breakout_max: 4
-breakout_volume_mult: 1.2
-rsi_mean_rev_min: 30
-rsi_mean_rev_max: 70
-ema_distance_mean_rev_max: 0.02
-atr_volatility_mult: 1.5
-normalized_range_volatility_min: 1.5
-ema_fast: 8
-ema_slow: 21
-indicator_window: 14
-bb_window: 20
-ma_window: 20
-higher_timeframe: "4h"
+# Enhanced regime configuration for aggressive profit maximization
+adx_trending_min: 15  # Reduced from 20 for earlier trend detection
+adx_sideways_max: 15  # Reduced from 18 for faster sideways detection
+bb_width_sideways_max: 0.02  # Reduced from 0.025 for tighter sideways detection
+bb_width_breakout_max: 3.5  # Reduced from 4 for earlier breakout detection
+breakout_volume_mult: 1.4  # Increased from 1.2 for better breakout confirmation
+rsi_mean_rev_min: 28  # Reduced from 30 for earlier mean reversion signals
+rsi_mean_rev_max: 72  # Increased from 70 for earlier mean reversion signals
+ema_distance_mean_rev_max: 0.018  # Reduced from 0.02 for tighter mean reversion
+atr_volatility_mult: 1.3  # Reduced from 1.5 for more volatility detection
+normalized_range_volatility_min: 1.3  # Reduced from 1.5 for more volatility detection
+ema_fast: 6  # Reduced from 8 for faster response
+ema_slow: 18  # Reduced from 21 for faster response
+indicator_window: 12  # Reduced from 14 for faster response
+bb_window: 15  # Reduced from 20 for faster response
+ma_window: 15  # Reduced from 20 for faster response
+higher_timeframe: "2h"  # Reduced from 4h for faster confirmation
 confirm_trend_with_higher_tf: false
 use_ml_regime_classifier: true
-ml_min_bars: 20
+ml_min_bars: 15  # Reduced from 20 for faster ML fallback
 log_level: INFO
 score_weights:
-  trending: 1.0
-  sideways: 1.0
-  breakout: 1.0
-  mean-reverting: 1.0
-  volatile: 1.0
-pattern_min_conf: 0.2
-ml_blend_weight: 0.5
-bull_fng: 50
-atr_baseline: 0.01
+  trending: 1.2  # Increased weight for trending regimes
+  sideways: 0.9  # Reduced weight for sideways regimes
+  breakout: 1.4  # Increased weight for breakout regimes
+  mean-reverting: 1.1  # Increased weight for mean reversion
+  volatile: 1.3  # Increased weight for volatile regimes
+pattern_min_conf: 0.15  # Reduced from 0.2 for more pattern detection
+ml_blend_weight: 0.6  # Increased from 0.5 for better ML integration
+bull_fng: 45  # Reduced from 50 for earlier bullish signals
+atr_baseline: 0.008  # Reduced from 0.01 for more sensitive volatility detection

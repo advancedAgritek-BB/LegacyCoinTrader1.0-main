@@ -7,8 +7,8 @@
 
 # Exchange Configuration
 EXCHANGE=kraken
-KRAKEN_API_KEY=pTDIfRbVaP3Y7y8Ph8CHiAC5O/wlBkCX0so9N91iobqhnysguyX7o18/
-KRAKEN_API_SECRET=9mmck1Rpzs8skQhtgGg+6NpzkRP1HiXf+q0HfMQ9d447av7LkaFhBh/gCNdWaOaYZFUA0AWS30FDP1NVT+BeTQ==
+KRAKEN_API_KEY=your_kraken_api_key_here
+KRAKEN_API_SECRET=your_kraken_api_secret_here
 KRAKEN_WS_TOKEN=your_kraken_ws_token_here
 
 # Alternative Exchange (Coinbase)
@@ -17,13 +17,13 @@ KRAKEN_WS_TOKEN=your_kraken_ws_token_here
 # COINBASE_PASSPHRASE=your_coinbase_passphrase
 
 # Telegram Configuration
-TELEGRAM_TOKEN=8126215032:AAEhQZLiXpssauKf0ktQsq1XqXl94QriCdE
-TELEGRAM_CHAT_ID=827777274
-TELE_CHAT_ADMINS=827777274
+TELEGRAM_TOKEN=your_telegram_token_here
+TELEGRAM_CHAT_ID=your_telegram_chat_id_here
+TELE_CHAT_ADMINS=your_telegram_chat_id_here
 
 # Solana Configuration
-HELIUS_KEY=43f311d0-a726-44fc-a5dc-36420cd07bb4
-WALLET_ADDRESS=EoiVpzLA6b6JBKXTB5WRFor3mPkseM6UisLHt8qK9g1c
+HELIUS_KEY=your_helius_api_key_here
+WALLET_ADDRESS=your_solana_wallet_address_here
 
 # LunarCrush Sentiment Analysis (Optional)
 # LUNARCRUSH_API_KEY=your_lunarcrush_api_key

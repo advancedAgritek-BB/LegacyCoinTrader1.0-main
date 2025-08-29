@@ -50,13 +50,22 @@ _ALL_REGIMES = [
 # Impact of each detected pattern on regime scoring. Values are multipliers
 # applied to the pattern strength.
 PATTERN_WEIGHTS = {
-    "breakout": ("breakout", 2.0),
-    "breakdown": ("volatile", 1.0),
-    "hammer": ("mean-reverting", 0.5),
-    "shooting_star": ("mean-reverting", 0.5),
-    "doji": ("sideways", 0.2),
-    "bullish_engulfing": ("mean-reverting", 1.2),
-    "ascending_triangle": ("breakout", 2.0),
+    "breakout": ("breakout", 2.5),  # Increased from 2.0 for better breakout detection
+    "breakdown": ("volatile", 1.3),  # Increased from 1.0 for better volatility detection
+    "hammer": ("mean-reverting", 0.7),  # Increased from 0.5 for better mean reversion
+    "shooting_star": ("mean-reverting", 0.7),  # Increased from 0.5 for better mean reversion
+    "doji": ("sideways", 0.15),  # Reduced from 0.2 to avoid false sideways signals
+    "bullish_engulfing": ("mean-reverting", 1.4),  # Increased from 1.2 for better signals
+    "ascending_triangle": ("breakout", 2.8),  # Increased from 2.0 for better breakout detection
+    "descending_triangle": ("breakout", 2.8),  # Added for better breakout detection
+    "double_bottom": ("mean-reverting", 1.6),  # Added for better mean reversion
+    "double_top": ("mean-reverting", 1.6),  # Added for better mean reversion
+    "head_and_shoulders": ("trending", 1.8),  # Added for trend detection
+    "inverse_head_and_shoulders": ("trending", 1.8),  # Added for trend detection
+    "flag": ("trending", 1.5),  # Added for trend continuation
+    "pennant": ("trending", 1.5),  # Added for trend continuation
+    "wedge": ("breakout", 2.2),  # Added for breakout detection
+    "channel": ("sideways", 0.8),  # Added for sideways detection
 }
 
 

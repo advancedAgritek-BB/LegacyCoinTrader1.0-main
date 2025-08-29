@@ -13,7 +13,6 @@ import aiohttp
 
 # Track WebSocket ping tasks
 WS_PING_TASKS: set[asyncio.Task] = set()
-
 try:
     import ccxt  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
@@ -750,10 +749,17 @@ async def fetch_candidates(ctx: BotContext) -> None:
     sol_cfg = ctx.config.get("solana_scanner", {})
     if sol_cfg.get("enabled"):
         try:
+            logger.info("Fetching Solana tokens...")
             solana_tokens = await get_solana_new_tokens(sol_cfg)
-            symbols.extend((m, 0.0) for m in solana_tokens)
+            if solana_tokens:
+                logger.info(f"Found {len(solana_tokens)} Solana tokens: {solana_tokens[:5]}")
+                symbols.extend((m, 0.0) for m in solana_tokens)
+            else:
+                logger.warning("No Solana tokens found - check API keys and configuration")
         except Exception as exc:  # pragma: no cover - best effort
             logger.error("Solana scanner failed: %s", exc)
+    else:
+        logger.warning("Solana scanner is disabled")
 
     symbol_names = [s for s, _ in symbols]
     avg_atr = compute_average_atr(
@@ -780,14 +786,19 @@ async def fetch_candidates(ctx: BotContext) -> None:
         if not symbol_priority_queue:
             symbol_priority_queue = build_priority_queue(symbols)
         if solana_tokens:
+            logger.info(f"Adding {len(solana_tokens)} Solana tokens to priority queue")
             for sym in reversed(solana_tokens):
                 symbol_priority_queue.appendleft(sym)
+                logger.debug(f"Added Solana token to queue: {sym}")
         if len(symbol_priority_queue) < batch_size:
+            logger.debug(f"Queue size {len(symbol_priority_queue)} < batch_size {batch_size}, refilling...")
             symbol_priority_queue.extend(build_priority_queue(symbols))
+        logger.debug(f"Priority queue size: {len(symbol_priority_queue)}")
         ctx.current_batch = [
             symbol_priority_queue.popleft()
             for _ in range(min(batch_size, len(symbol_priority_queue)))
         ]
+        logger.info(f"Current batch: {ctx.current_batch}")
 
 
 async def scan_arbitrage(exchange: object, config: dict) -> list[str]:
@@ -1025,7 +1036,10 @@ async def execute_solana_trade(
         from crypto_bot.solana_trading import sniper_trade
 
         sol_score, _ = sniper_solana.generate_signal(candidate["df"])
-        if sol_score > 0.7:
+        # Lower threshold for paper trading to see more activity
+        threshold = 0.5 if ctx.config.get("execution_mode") == "dry_run" else 0.7
+        logger.info(f"Solana signal score for {sym}: {sol_score:.3f} (threshold: {threshold:.3f})")
+        if sol_score > threshold:
             base, quote = sym.split("/")
 
             # Apply sentiment boost to size
@@ -1085,7 +1099,7 @@ async def execute_solana_trade(
             logger.info(f"Solana trade executed successfully: {side} {amount} {sym}")
             return True
         else:
-            logger.debug(f"Solana sniper score too low ({sol_score:.2f}) for {sym}")
+            logger.info(f"Solana sniper score too low ({sol_score:.3f} < {threshold:.3f}) for {sym}")
             return False
 
     except Exception as e:
@@ -1238,6 +1252,13 @@ class AsyncTradeManager:
             for task in completed_tasks:
                 if task.exception():
                     logger.error(f"Trading task failed: {task.exception()}")
+    
+    def get_status(self) -> dict:
+        """Get current status of the trade manager."""
+        return {
+            "active_tasks": len(self.active_tasks),
+            "task_statuses": [task._state for task in self.active_tasks]
+        }
 
 
 # Global trade manager instance
@@ -1271,16 +1292,27 @@ async def execute_signals(ctx: BotContext) -> None:
             continue
 
         df = candidate["df"]
+        if df is None or df.empty:
+            logger.warning(f"No data available for {sym} - skipping")
+            continue
         price = df["close"].iloc[-1]
         score = candidate.get("score", 0.0)
         strategy = candidate.get("name", "")
+        logger.debug(f"Symbol {sym} - Price: {price:.6f}, Score: {score:.3f}, Strategy: {strategy}")
+        logger.debug(f"DataFrame columns: {list(df.columns)}")
+        logger.debug(f"DataFrame last 3 rows: {df.tail(3)[['close', 'volume']].to_dict()}")
         allowed, reason = ctx.risk_manager.allow_trade(df, strategy)
         if not allowed:
             logger.info("Trade blocked for %s: %s", sym, reason)
             continue
+        logger.debug(f"Trade allowed for {sym} via {strategy}")
+        logger.debug(f"Risk validation passed for {sym}")
 
         probs = candidate.get("probabilities", {})
-        reg_prob = float(probs.get(candidate.get("regime"), 0.0))
+        regime = candidate.get("regime", "unknown")
+        reg_prob = float(probs.get(regime, 0.0))
+        logger.debug(f"Symbol {sym} regime: {regime}, probability: {reg_prob:.3f}")
+        logger.debug(f"All regime probabilities: {probs}")
 
         # Get LunarCrush sentiment boost if available
         sentiment_boost = 1.0
@@ -1305,6 +1337,8 @@ async def execute_signals(ctx: BotContext) -> None:
                 
         except Exception as exc:
             logger.debug(f"Failed to get sentiment boost for {sym}: {exc}")
+        
+        logger.debug(f"Final sentiment boost for {sym}: {sentiment_boost:.3f}")
 
         base_size = ctx.risk_manager.position_size(
             reg_prob,
@@ -1313,9 +1347,11 @@ async def execute_signals(ctx: BotContext) -> None:
             atr=candidate.get("atr"),
             price=price,
         )
+        logger.debug(f"Base position size calculation for {sym}: reg_prob={reg_prob:.3f}, balance={ctx.balance:.2f}, atr={candidate.get('atr', 'None')}")
 
         # Apply sentiment boost (now more conservative)
         size = base_size * sentiment_boost
+        logger.debug(f"Position size calculation for {sym}: base={base_size:.4f}, sentiment_boost={sentiment_boost:.3f}, final={size:.4f}")
         if size <= 0:
             logger.info("Calculated size %.4f for %s - skipping", size, sym)
             continue
@@ -1328,6 +1364,8 @@ async def execute_signals(ctx: BotContext) -> None:
                 strategy,
             )
             continue
+        logger.debug(f"Capital allocation successful for {sym}: {size:.4f} via {strategy}")
+        logger.debug(f"Current balance: {ctx.balance:.2f}, allocated: {size:.4f}")
 
         side = direction_to_side(candidate["direction"])
         
@@ -1337,13 +1375,20 @@ async def execute_signals(ctx: BotContext) -> None:
             if not allowed:
                 logger.info("Short trading blocked for %s: %s", sym, reason)
                 continue
+            logger.debug(f"Short trading allowed for {sym}")
+        else:
+            logger.debug(f"Long trading for {sym}")
         
         # Execute trades asynchronously based on symbol type
         start_exec = time.perf_counter()
 
         if sym.endswith("/USDC"):
             # Solana trade - execute asynchronously
-            logger.info(f"Queueing Solana trade for {sym}")
+            logger.info(f"Queueing Solana trade for {sym} with strategy {strategy}")
+            logger.debug(f"Solana candidate data: {candidate}")
+            logger.debug(f"Trade parameters: side={side}, size={size:.4f}, price={price:.6f}")
+            logger.debug(f"DataFrame shape: {candidate['df'].shape if candidate.get('df') is not None else 'None'}")
+            logger.debug(f"Executing Solana trade for {sym} via {strategy}")
             await trade_manager.execute_trade_async(
                 execute_solana_trade(
                     ctx,
@@ -1374,26 +1419,37 @@ async def execute_signals(ctx: BotContext) -> None:
             )
             executed += 1
 
+        execution_time = time.perf_counter() - start_exec
         ctx.timing["execution_latency"] = max(
             ctx.timing.get("execution_latency", 0.0),
-            time.perf_counter() - start_exec,
+            execution_time,
         )
+        logger.debug(f"Trade execution time for {sym}: {execution_time:.3f}s")
+        logger.debug(f"Trade execution completed for {sym}")
 
         # Handle micro-scalp monitoring
         if strategy == "micro_scalp":
+            logger.debug(f"Starting micro-scalp monitoring for {sym}")
             asyncio.create_task(_monitor_micro_scalp_exit(ctx, sym))
 
     # Wait for all trading tasks to complete or timeout
     if executed > 0:
         logger.info(f"Waiting for {executed} trading tasks to complete...")
+        logger.debug(f"Trade manager status: {trade_manager.get_status()}")
         await trade_manager.wait_for_completion(timeout=30.0)
         await trade_manager.cleanup_completed()
         logger.info("All trading tasks completed or timed out")
-
-    if executed == 0:
+    else:
         logger.info(
             "No trades executed from %d candidate signals", len(results[:top_n])
         )
+        # Log details about why no trades were executed
+        for i, candidate in enumerate(results[:top_n]):
+            sym = candidate.get("symbol", "unknown")
+            score = candidate.get("score", 0.0)
+            direction = candidate.get("direction", "none")
+            regime = candidate.get("regime", "unknown")
+            logger.debug(f"Candidate {i+1}: {sym} - Score: {score:.3f}, Direction: {direction}, Regime: {regime}")
 
 
 async def handle_exits(ctx: BotContext) -> None:
@@ -1724,13 +1780,19 @@ async def _main_impl() -> TelegramNotifier:
         """Periodically fetch new Solana tokens and queue them."""
         cfg = config.get("solana_scanner", {})
         interval = cfg.get("interval_minutes", 5) * 60
+        logger.info("Solana scanner started with interval: %d seconds", interval)
         while True:
             try:
+                logger.debug("Starting Solana token scan...")
                 tokens = await get_solana_new_tokens(cfg)
                 if tokens:
+                    logger.info("Found %d Solana tokens: %s", len(tokens), tokens[:5])
                     async with QUEUE_LOCK:
                         for sym in reversed(tokens):
                             symbol_priority_queue.appendleft(sym)
+                        logger.info("Added %d Solana tokens to priority queue", len(tokens))
+                else:
+                    logger.debug("No Solana tokens found in this scan cycle")
             except asyncio.CancelledError:
                 break
             except Exception as exc:  # pragma: no cover - best effort
@@ -1957,8 +2019,12 @@ async def _main_impl() -> TelegramNotifier:
         )
     )
     solana_scan_task: asyncio.Task | None = None
-    if config.get("solana_scanner", {}).get("enabled"):
+    solana_scanner_config = config.get("solana_scanner", {})
+    if solana_scanner_config.get("enabled"):
+        logger.info("Solana scanner enabled with config: %s", solana_scanner_config)
         solana_scan_task = asyncio.create_task(solana_scan_loop())
+    else:
+        logger.warning("Solana scanner is disabled - no Solana trades will be executed")
     print("Bot running. Type 'stop' to pause, 'start' to resume, 'quit' to exit.")
 
     from crypto_bot.telegram_bot_ui import TelegramBotUI

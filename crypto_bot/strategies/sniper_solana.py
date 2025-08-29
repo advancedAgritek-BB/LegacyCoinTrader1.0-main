@@ -46,6 +46,11 @@ def generate_signal(df: pd.DataFrame, config: Optional[dict] = None) -> Tuple[fl
 
     if df is None or df.empty:
         return 0.0, "none"
+    
+    # Add debug logging for paper trading
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.debug(f"Generating Solana signal for DataFrame with {len(df)} rows")
 
     params = config or {}
     atr_window = int(params.get("atr_window", 14))
@@ -76,19 +81,29 @@ def generate_signal(df: pd.DataFrame, config: Optional[dict] = None) -> Tuple[fl
         df["high"], df["low"], df["close"], window=atr_window
     )
     if atr.empty or pd.isna(atr.iloc[-1]):
+        logger.debug("ATR calculation failed - empty or NaN")
         return 0.0, "none"
 
+    current_atr = atr.iloc[-1]
     price_change = df["close"].iloc[-1] - df["close"].iloc[-2]
-    if abs(price_change) >= atr.iloc[-1] * jump_mult:
+    jump_threshold = current_atr * jump_mult
+    
+    logger.debug(f"ATR: {current_atr:.6f}, Price change: {price_change:.6f}, Jump threshold: {jump_threshold:.6f}")
+    
+    if abs(price_change) >= jump_threshold:
         direction = "long" if price_change > 0 else "short"
+        logger.debug(f"Signal triggered: {direction} with score 1.0")
         if token and RugCheckAPI.risk_score(token) >= rug_threshold:
+            logger.debug(f"Rug check failed for token {token}")
             return 0.0, "none"
         return 1.0, direction
 
     if entry_price is not None:
         if df["close"].iloc[-1] >= float(entry_price) * (1 + profit_target):
+            logger.debug(f"Profit target reached: {df['close'].iloc[-1]:.6f} >= {float(entry_price) * (1 + profit_target):.6f}")
             return 1.0, "close"
 
+    logger.debug("No signal generated - conditions not met")
     return 0.0, "none"
 
 

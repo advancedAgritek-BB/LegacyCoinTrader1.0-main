@@ -145,6 +145,7 @@ async def get_solana_new_tokens(config: dict) -> List[str]:
     raydium_key = str(config.get("raydium_api_key", ""))
     pump_key = str(config.get("pump_fun_api_key", ""))
     gecko_search = bool(config.get("gecko_search", True))
+    fallback_enabled = bool(config.get("fallback_to_test_tokens", False))
 
     tasks = []
     if raydium_key:
@@ -161,6 +162,15 @@ async def get_solana_new_tokens(config: dict) -> List[str]:
                 return res
             coro = _wrap()
         tasks.append(coro)
+
+    # If no API keys available and fallback is enabled, return test tokens for paper trading
+    if not tasks and fallback_enabled:
+        logger.info("No Solana API keys available, using fallback test tokens for paper trading")
+        test_tokens = [
+            "SOL/USDC", "RAY/USDC", "SRM/USDC", "ORCA/USDC", "MNGO/USDC",
+            "BONK/USDC", "JUP/USDC", "PYTH/USDC", "WIF/USDC", "POPCAT/USDC"
+        ]
+        return test_tokens[:limit]
 
     if not tasks:
         return []

@@ -86,8 +86,8 @@ def get_symbol_data_source(symbol: str, exchange_id: Optional[str] = None) -> st
     base = base.upper()
     quote = quote.upper()
     
-    # Check if this is a Solana chain symbol
-    if quote == "USDC" and is_valid_solana_token(base):
+    # Check if base looks like a Solana address (highest priority - regardless of quote)
+    if is_valid_solana_token(base):
         return "solana"
     
     # Check if this is a known CEX symbol
@@ -96,10 +96,6 @@ def get_symbol_data_source(symbol: str, exchange_id: Optional[str] = None) -> st
         if (base in exchange_patterns["supported_bases"] and 
             quote in exchange_patterns["supported_quotes"]):
             return "cex"
-    
-    # Fallback: check if base looks like a Solana address
-    if is_valid_solana_token(base):
-        return "solana"
     
     # Default to CEX for traditional symbols
     return "cex"

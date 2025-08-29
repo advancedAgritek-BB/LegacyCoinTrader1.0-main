@@ -12,11 +12,11 @@ This guide ensures that Telegram notifications work properly and that wallet bal
 ### 2. Current Telegram Settings
 ```yaml
 telegram:
-  chat_admins: 827777274
-  chat_id: 827777274
+  chat_admins: your_telegram_chat_id_here
+chat_id: your_telegram_chat_id_here
   command_cooldown: 3
   enabled: true
-  token: 8126215032:AAEhQZLiXpssauKf0ktQsq1XqXl94QriCdE
+  token: your_telegram_token_here
   trade_updates: true
   balance_updates: true
   status_updates: true
@@ -25,9 +25,9 @@ telegram:
 ### 3. Environment Variables Required
 Create or update `crypto_bot/.env` with:
 ```bash
-TELEGRAM_TOKEN=8126215032:AAEhQZLiXpssauKf0ktQsq1XqXl94QriCdE
-TELEGRAM_CHAT_ID=827777274
-TELE_CHAT_ADMINS=827777274
+TELEGRAM_TOKEN=your_telegram_token_here
+TELEGRAM_CHAT_ID=your_telegram_chat_id_here
+TELE_CHAT_ADMINS=your_telegram_chat_id_here
 EXECUTION_MODE=dry_run  # or 'live' for real trading
 ```
 

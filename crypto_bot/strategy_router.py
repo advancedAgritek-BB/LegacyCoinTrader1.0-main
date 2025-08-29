@@ -422,6 +422,9 @@ def evaluate_regime(
         from crypto_bot.utils.regime_pnl_tracker import compute_weights
 
         weights = compute_weights(regime)
+        
+        # Apply aggressive regime weighting for high-frequency strategies
+        weights = _apply_aggressive_weighting(regime, weights, cfg_dict)
 
     pairs: list[Tuple[Callable[[pd.DataFrame], Tuple[float, str]], float]] = []
 
@@ -454,6 +457,64 @@ def evaluate_regime(
 
     engine = SignalFusionEngine(pairs)
     return engine.fuse(df, cfg_dict)
+
+
+def _apply_aggressive_weighting(regime: str, weights: Dict[str, float], config: Dict) -> Dict[str, float]:
+    """Apply aggressive weighting to boost high-frequency strategies in volatile regimes."""
+    enhanced_weights = weights.copy()
+    
+    # Strategy performance multipliers based on regime
+    regime_multipliers = {
+        "volatile": {
+            "micro_scalp_bot": 1.8,  # Boost scalping in volatile markets
+            "sniper_bot": 1.6,       # Boost sniping in volatile markets
+            "flash_crash_bot": 1.7,  # Boost flash crash detection
+            "meme_wave_bot": 1.5,    # Boost meme trading
+            "hft_engine": 1.9,       # Boost HFT in volatile markets
+        },
+        "breakout": {
+            "breakout_bot": 1.8,     # Boost breakout detection
+            "sniper_bot": 1.5,       # Boost sniping on breakouts
+            "momentum_bot": 1.6,     # Boost momentum on breakouts
+        },
+        "trending": {
+            "trend_bot": 1.7,        # Boost trend following
+            "momentum_bot": 1.5,     # Boost momentum in trends
+            "lstm_bot": 1.4,         # Boost ML in trends
+        },
+        "mean-reverting": {
+            "mean_bot": 1.6,         # Boost mean reversion
+            "dip_hunter": 1.5,       # Boost dip hunting
+            "stat_arb_bot": 1.4,     # Boost statistical arbitrage
+            "grid_bot": 1.3,         # Boost grid trading
+        },
+        "sideways": {
+            "grid_bot": 1.6,         # Boost grid trading in sideways markets
+            "maker_spread": 1.5,     # Boost market making
+            "range_arb_bot": 1.4,    # Boost range arbitrage
+        },
+        "bounce": {
+            "bounce_scalper": 1.7,   # Boost bounce scalping
+            "micro_scalp_bot": 1.4,  # Boost micro scalping on bounces
+        },
+        "scalp": {
+            "micro_scalp_bot": 1.8,  # Boost micro scalping
+            "bounce_scalper": 1.3,   # Boost bounce scalping
+        }
+    }
+    
+    # Apply regime-specific multipliers
+    if regime in regime_multipliers:
+        for strategy, multiplier in regime_multipliers[regime].items():
+            if strategy in enhanced_weights:
+                enhanced_weights[strategy] *= multiplier
+    
+    # Normalize weights to sum to 1
+    total_weight = sum(enhanced_weights.values())
+    if total_weight > 0:
+        enhanced_weights = {k: v / total_weight for k, v in enhanced_weights.items()}
+    
+    return enhanced_weights
 
 
 def _bandit_context(

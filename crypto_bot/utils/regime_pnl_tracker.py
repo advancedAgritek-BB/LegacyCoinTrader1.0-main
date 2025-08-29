@@ -54,16 +54,106 @@ def get_metrics(regime: str | None = None, path: str | Path = LOG_FILE) -> Dict[
 
 
 def compute_weights(regime: str, path: str | Path = LOG_FILE) -> Dict[str, float]:
-    """Return normalized strategy weights for ``regime`` using Sharpe ratio."""
+    """Return normalized weights for strategies in ``regime`` based on recent performance."""
     data = get_metrics(regime, path)
     strategies = data.get(regime, {})
     if not strategies:
         return {}
-    scores = {s: m["sharpe"] for s, m in strategies.items()}
+    
+    # Enhanced scoring with recency bias and volatility adjustment
+    scores = {}
+    for strategy, metrics in strategies.items():
+        # Base score using Sharpe ratio
+        base_score = metrics.get("sharpe", 0.0)
+        
+        # Apply recency bias - recent trades get higher weight
+        recency_bias = _calculate_recency_bias(strategy, regime, path)
+        
+        # Apply volatility adjustment - higher volatility strategies get bonus in volatile regimes
+        volatility_bonus = _calculate_volatility_bonus(strategy, regime, metrics)
+        
+        # Apply drawdown penalty
+        drawdown_penalty = _calculate_drawdown_penalty(metrics)
+        
+        # Calculate final score
+        final_score = base_score * recency_bias * (1 + volatility_bonus) * (1 - drawdown_penalty)
+        scores[strategy] = max(0.0, final_score)
+    
+    # Normalize scores
     total = sum(scores.values())
     if not total:
         return {s: 1 / len(scores) for s in scores}
+    
     return {s: sc / total for s, sc in scores.items()}
+
+
+def _calculate_recency_bias(strategy: str, regime: str, path: str | Path) -> float:
+    """Calculate recency bias based on recent trade activity."""
+    try:
+        df = pd.read_csv(path)
+        if df.empty:
+            return 1.0
+        
+        # Filter for strategy and regime
+        mask = (df["strategy"] == strategy) & (df["regime"] == regime)
+        strategy_trades = df[mask]
+        
+        if strategy_trades.empty:
+            return 0.8  # Penalty for no recent trades
+        
+        # Calculate days since last trade
+        strategy_trades["timestamp"] = pd.to_datetime(strategy_trades["timestamp"])
+        days_since_last = (pd.Timestamp.now() - strategy_trades["timestamp"].max()).days
+        
+        # Recency bias: more recent trades get higher weight
+        if days_since_last <= 1:
+            return 1.3  # Bonus for very recent trades
+        elif days_since_last <= 3:
+            return 1.2  # Bonus for recent trades
+        elif days_since_last <= 7:
+            return 1.1  # Small bonus for recent trades
+        elif days_since_last <= 14:
+            return 1.0  # Neutral for older trades
+        else:
+            return 0.9  # Penalty for old trades
+            
+    except Exception:
+        return 1.0
+
+
+def _calculate_volatility_bonus(strategy: str, regime: str, metrics: Dict[str, Any]) -> float:
+    """Calculate volatility bonus for high-frequency strategies in volatile regimes."""
+    # High-frequency strategies get bonus in volatile regimes
+    high_freq_strategies = {
+        "micro_scalp_bot", "sniper_bot", "flash_crash_bot", 
+        "meme_wave_bot", "hft_engine", "bounce_scalper"
+    }
+    
+    if strategy in high_freq_strategies and regime == "volatile":
+        return 0.3  # 30% bonus for high-frequency strategies in volatile markets
+    elif strategy in high_freq_strategies and regime in ["breakout", "trending"]:
+        return 0.2  # 20% bonus for high-frequency strategies in trending markets
+    elif strategy in high_freq_strategies:
+        return 0.1  # 10% bonus for high-frequency strategies in other markets
+    
+    return 0.0
+
+
+def _calculate_drawdown_penalty(metrics: Dict[str, Any]) -> float:
+    """Calculate drawdown penalty to avoid strategies with high drawdowns."""
+    drawdown = metrics.get("drawdown", 0.0)
+    
+    # Progressive drawdown penalty
+    if drawdown <= 0.05:  # 5% or less
+        return 0.0
+    elif drawdown <= 0.10:  # 5-10%
+        return 0.1
+    elif drawdown <= 0.20:  # 10-20%
+        return 0.2
+    elif drawdown <= 0.30:  # 20-30%
+        return 0.4
+    else:  # 30%+
+        return 0.6
 
 
 def get_recent_win_rate(
