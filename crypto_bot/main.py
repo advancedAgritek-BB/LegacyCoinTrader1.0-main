@@ -84,7 +84,7 @@ from crypto_bot.utils.regime_pnl_tracker import get_recent_win_rate
 from crypto_bot.paper_wallet import PaperWallet
 from crypto_bot import grid_state
 from crypto_bot.utils.strategy_utils import compute_strategy_weights
-from crypto_bot.auto_optimizer import optimize_strategies
+from crypto_bot.auto_optimizer import AggressiveAutoOptimizer
 from crypto_bot.utils.telemetry import telemetry, write_cycle_metrics
 from crypto_bot.utils.correlation import compute_correlation_matrix
 from crypto_bot.utils.strategy_analytics import write_scores, write_stats
@@ -2169,7 +2169,9 @@ async def _main_impl() -> TelegramNotifier:
                     time.time() - last_optimize
                     >= config["optimization"].get("interval_days", 7) * 86400
                 ):
-                    optimize_strategies()
+                    # Initialize optimizer and run optimization
+                    optimizer = AggressiveAutoOptimizer()
+                    await optimizer.optimize_strategies()
                     last_optimize = time.time()
 
             if not state.get("running"):
